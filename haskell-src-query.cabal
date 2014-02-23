@@ -1,0 +1,25 @@
+name:                haskell-src-query
+version:             1.0.0
+synopsis:            Useful queries and source transformation suggestions (via hlint) for Haskell
+description:         Useful queries and source transformation suggestions (via hlint) for Haskell
+license:             BSD3
+license-file:        LICENSE
+author:              Eric Jones
+maintainer:          ecjones2040@gmail.com
+copyright:           Eric Jones 2014
+category:            Development
+build-type:          Simple
+cabal-version:       >=1.8
+
+executable haskell-src-query
+  main-is:           HSrcQuery.hs
+  ghc-options:       -O2 -Wall
+  hs-source-dirs:    src
+  build-depends:     Cabal >= 1.18.0,
+                     hlint >= 1.8.57,
+                     process >= 1.1.0.2,
+                     base >= 4 && < 5,
+                     haskell-src-exts >= 1.14.0,
+                     optparse-applicative >= 0.7.0.2,
+                     syb >= 0.4.1
+

@@ -1,0 +1,3 @@
+[submodule "hlint"]
+	path = src-packages/hlint
+	url = https://github.com/ndmitchell/hlint.git

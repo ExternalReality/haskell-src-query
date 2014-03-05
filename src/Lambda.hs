@@ -7,14 +7,14 @@ import Control.Monad
 import Data.Generics.Aliases
 import Data.Generics.Schemes
 import Data.List
+import Data.Char
 import Language.Haskell.Exts
 ------------------------------------------------------------------------------
 import HDevTools
-import Client
 
 ------------------------------------------------------------------------------
-freeVariables :: FilePath -> FilePath -> FilePath -> String -> Client -> String -> IO String
-freeVariables srcPath pkgConfigPath cabalFilePath buildTargetName client code = case parseExp code of
+freeVariables :: FilePath -> FilePath -> FilePath -> String -> String -> IO String
+freeVariables srcPath pkgConfigPath cabalFilePath buildTargetName code = case parseExp code of
   ParseOk ast -> do
    names <- dropModuleVariableNames srcPath
                                     pkgConfigPath

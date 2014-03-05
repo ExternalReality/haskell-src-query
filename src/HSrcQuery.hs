@@ -68,7 +68,6 @@ main = do
                         pkgConfigDirPath 
                         cabalFilePath 
                         buildTargetName
-                        client
                         code
 
 ------------------------------------------------------------------------------
@@ -93,22 +92,22 @@ runQuery
      -> FilePath
      -> FilePath
      -> String
-     -> Client
      -> String
      -> IO String
-runQuery FreeVariables srcFile 
-                       pkgConfigPath 
-                       cabalFilePath 
-                       buildTargetName 
-                       client 
-                       code = 
-  freeVariables srcFile 
+runQuery FreeVariables srcFile
+                       pkgConfigPath
+                       cabalFilePath
+                       buildTargetName
+                       code =
+  freeVariables srcFile
                 pkgConfigPath
                 cabalFilePath
                 buildTargetName
-                client
                 code
-runQuery LambdaBody _ _ _ _ _ code = return $ lambdaBody code
-runQuery LambdaArgs _ _ _ _ _ code = return $ lambdaArgs code
-runQuery HLint      _ _ _ _ _ code = hlint code
-runQuery ParseAST   _ _ _ _ _ code = return $ parseAST code
+runQuery LambdaBody _ _ _ _ code = return $ lambdaBody code
+runQuery LambdaArgs _ _ _ _ code = return $ lambdaArgs code
+runQuery HLint      _ _ _ _ code = hlint code
+runQuery ParseAST   _ _ _ _ code = return $ parseAST code
+
+------------------------------------------------------------------------------
+fn c = (\a b -> a + b) c

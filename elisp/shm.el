@@ -36,6 +36,7 @@
 (require 'shm-context-menu)
 
 (require 'cl)
+(require 'json)
 
 (defvar shm-current-node-overlay nil
   "Overlay to highlight the current node.")
@@ -266,7 +267,7 @@ imagine."
                                      "Emacs")
               ((file-error)
                (error "Unable to find structured-haskell-mode executable! See README for help.")))))
-        (read (buffer-string))))))
+        (json-read-from-string (buffer-string))))))
 
 (defun shm-lint-ast (type start end)
   "Get refactor suggestions for the region of TYPE from START to END."

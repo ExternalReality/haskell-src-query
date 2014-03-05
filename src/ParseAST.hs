@@ -6,16 +6,17 @@ module ParseAST (parseAST) where
 
 import Control.Applicative
 import Data.Data
+import Data.List
 import Data.Maybe
 import Language.Haskell.Exts.Annotated
 
------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 data D = forall a. Data a => D a
 
------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------
 parseAST :: String -> [Char]
 parseAST code = case parseTopLevel parseMode code of
-  ParseOk (D ast) -> ("[" ++ concat (genHSE ast) ++ "]")
+  ParseOk (D ast) -> "[" ++  (intercalate "," (genHSE ast)) ++ "]"
   ParseFailed _ _ -> "[]"
 
 -----------------------------------------------------------------------------------------
@@ -72,7 +73,7 @@ pre x i =
 -----------------------------------------------------------------------------------------
 -- | Generate a span from a HSE SrcSpan.
 spanHSE :: String -> String -> SrcSpan -> String
-spanHSE typ cons SrcSpan{..} = "[" ++ spanContent ++ "]"
+spanHSE typ cons SrcSpan{..} = "[" ++ (intercalate "," spanContent) ++ "]"
   where unqualify   = dropUntilLast '.'
         spanContent =
           unwords [unqualify typ

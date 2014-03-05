@@ -32,8 +32,13 @@ lambdaBody code = case parseExp code of
 ------------------------------------------------------------------------------
 lambdaArgs :: String -> String
 lambdaArgs code = case parseExp code of
-  ParseOk ast -> extractLambdaArgs ast
+  ParseOk ast ->  prettyLambdaArgs ast
   _           -> "[]"
+  where
+    prettyLambdaArgs = trim
+                     . takeWhile (/= '-')
+                     . dropWhile (== '\\')
+                     . prettyPrint
 
 ------------------------------------------------------------------------------
 extractLambdaArgs :: Exp -> String
@@ -88,3 +93,17 @@ dropModuleVariableNames srcPath pkgConfigPath cabalFilePath buildTargetName  =
                                             pkgConfigPath
                                             cabalFilePath
                                             buildTargetName
+
+
+------------------------------------------------------------------------------
+
+trim :: [Char] -> [Char]
+trim xs = dropSpaceTail "" $ dropWhile isSpace xs
+
+dropSpaceTail :: [Char] -> [Char] -> [Char]
+dropSpaceTail _ "" = ""
+dropSpaceTail maybeStuff (x:xs)
+        | isSpace x       = dropSpaceTail (x:maybeStuff) xs
+        | null maybeStuff = x : dropSpaceTail "" xs
+        | otherwise       = reverse maybeStuff ++ x : dropSpaceTail "" xs
+

@@ -27,7 +27,7 @@ data Request = Request  { query            :: Query
                         }
 
 ------------------------------------------------------------------------------
-requestParser :: Parser Request 
+requestParser :: Parser Request
 requestParser = Request <$> argument parseQueryArg
                         ( metavar "QUERY"
                           <> help "Query to run on selected code.")
@@ -36,37 +36,37 @@ requestParser = Request <$> argument parseQueryArg
                           <> help "Client Emacs or Sublime" )
                   <*> strOption ( long "source-file"
                                        <> metavar "FILE"
-                                       <> help "File containing selected code." 
+                                       <> help "File containing selected code."
                                        <> value "")
                   <*> strOption ( long "package-conf"
                                        <> metavar "DIRECTORY"
-                                       <> help "GHC package config directory." 
+                                       <> help "GHC package config directory."
                                        <> value "")
                   <*> strOption ( long "cabal-file"
                                        <> metavar "FILE"
-                                       <> help "Cabal file" 
+                                       <> help "Cabal file"
                                        <> value "")
                   <*> strOption ( long "build-target"
                                        <> metavar "TARGET"
-                                       <> help "Target of build" 
+                                       <> help "Target of build"
                                        <> value "")
 
-
+------------------------------------------------------------------------------
 requestParserInfo :: ParserInfo Request
 requestParserInfo = info (helper <*> requestParser)
                       ( fullDesc
                       <> progDesc "Query infromation about Haskell source."
                       <> header "haskell-src-query - get info about haskell src")
-                  
+
 ------------------------------------------------------------------------------
 main :: IO ()
 main = do
   Request{..} <- execParser requestParserInfo
   code        <- getContents
-  putStrLn =<< runQuery query 
-                        srcFilePath 
-                        pkgConfigDirPath 
-                        cabalFilePath 
+  putStrLn =<< runQuery query
+                        srcFilePath
+                        pkgConfigDirPath
+                        cabalFilePath
                         buildTargetName
                         code
 

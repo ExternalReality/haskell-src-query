@@ -1,6 +1,5 @@
 module HDevTools (isInModuleScope) where
 
-import Control.Monad
 import Data.List
 import System.Exit
 import System.Process
@@ -47,5 +46,3 @@ ghcOptionPkgConfig =  (++) "-g-package-conf"
 ------------------------------------------------------------------------------
 ghcOptionSrcDir :: String -> String
 ghcOptionSrcDir = (++) "-g-i"
-
-fn = isInModuleScope "src/HSrcQuery.hs" ".cabal-sandbox/x86_64-linux-ghc-7.6.3-packages.conf.d/" "haskell-src-query.cabal" "haskell-src-query" "runQuery"

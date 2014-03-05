@@ -32,7 +32,7 @@ lambdaBody code = case parseExp code of
 ------------------------------------------------------------------------------
 lambdaArgs :: String -> String
 lambdaArgs code = case parseExp code of
-  ParseOk ast ->  prettyLambdaArgs ast
+  ParseOk ast ->  show $ prettyLambdaArgs ast
   _           -> "[]"
   where
     prettyLambdaArgs = trim

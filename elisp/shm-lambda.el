@@ -11,7 +11,7 @@
 (shm-query shm-query-lambda-free-vars "freeVariables")
 
 (defun shm-lambda-args (node)
-  (vector-to-string (shm-query-lambda-args node)))
+  (shm-query-lambda-args node))
 
 (defun shm-lambda-free-vars (node)
   (vector-to-string (shm-query-lambda-free-vars

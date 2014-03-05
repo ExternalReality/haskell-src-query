@@ -66,7 +66,7 @@
          (lambda-body (shm-query-lambda-body current-node))
          (current-top-level-node (cdr (shm-get-parent-top-level-decl current-node-pair)))
          (replacement (concat function-name " " free-variables)))
-    (shm-replace-node-syntax current-node replacement)
+    (shm-replace-node-syntax current-node (chomp replacement))
     (goto-char (shm-node-end current-top-level-node))
     (insert ?\n?\n)
     (insert function-name " " free-variables 

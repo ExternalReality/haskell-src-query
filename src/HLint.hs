@@ -53,4 +53,5 @@ findSuggestion i = fromMaybe "Error: No suggestion string mapping yet" $
                            , ("Avoid lambda", "move lambda to top level")
                            , ("Collapse lambdas", "collapse nested lambdas") 
                            , ("Redundant bracket", "remove redundant bracket")
+                           , ("Eta reduce", "perform eta reduction")
                            ]

@@ -211,7 +211,7 @@ child, and in fact is common."
   (cdr (shm-node-child-pair node-pair)))
 
 (defun shm-get-parent-top-level-decl (node-pair)
-  (shm-node-parent node-pair "Decl SrcSpanInfo"))
+  (shm-node-parent node-pair "Decl"))
 
 (defun shm-node-ancestor-at-point (node-pair point)
   "Find the highest up ancestor that still starts at this point."

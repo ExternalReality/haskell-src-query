@@ -75,13 +75,16 @@ pre x i =
 spanHSE :: String -> String -> SrcSpan -> String
 spanHSE typ cons SrcSpan{..} = "[" ++ (intercalate "," spanContent) ++ "]"
   where unqualify   = dropUntilLast '.'
-        spanContent =
-          unwords [unqualify typ
-                  ,cons
-                  ,show srcSpanStartLine
-                  ,show srcSpanStartColumn
-                  ,show srcSpanEndLine
-                  ,show srcSpanEndColumn]
+        spanContent = [ show $ dropSrcSpanText (filter (/= '"') (unqualify typ)) 
+                      , show cons
+                      , show srcSpanStartLine
+                      , show srcSpanStartColumn
+                      , show srcSpanEndLine
+                      , show srcSpanEndColumn]
+          where
+            dropSrcSpanText str = if "SrcSpanInfo" `isSuffixOf` str
+                                    then takeWhile (/= ' ') str
+                                    else str
 
 ------------------------------------------------------------------------------
 -- | Like 'dropWhile', but repeats until the last match.

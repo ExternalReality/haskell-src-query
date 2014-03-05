@@ -41,11 +41,6 @@ lambdaArgs code = case parseExp code of
                      . prettyPrint
 
 ------------------------------------------------------------------------------
-extractLambdaArgs :: Exp -> String
-extractLambdaArgs (Lambda _ ast _) = dropCommas . show $ allNames ast
-extractLambdaArgs _                = "[]"
-
-------------------------------------------------------------------------------
 allVariables :: GenericQ [Exp]
 allVariables = listify isVar
 

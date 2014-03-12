@@ -9,7 +9,6 @@
 (require 'popup)
 
 (defconst qualify-import "qualify import")
-(defconst raise-child "raise child")
 (defconst visit-module-definition "visit module definition")
 (defconst hlint-suggestion "hlint suggestion")
 (defconst create-top-level-function-from-lambda "create top level function from lambda")
@@ -37,8 +36,6 @@
       (add-to-list 'menu (shm-item-for-top-level-type-decl)))
     (when (shm-import-decl-p cons) 
       (add-to-list 'menu (shm-item-for-import-decl)))
-    (when (shm-has-parent-with-matching-type-p pair)
-      (add-to-list 'menu (shm-item-for-child-nodes-with-matching-parent)))
     (when (and (shm-module-name-p cons)
                (fboundp (quote haskell-mode-tag-find)))
       (add-to-list 'menu (shm-item-for-module-name)))
@@ -120,9 +117,6 @@
 (defun shm-item-for-import-decl ()
   (popup-make-item "✎ qualify import" :value qualify-import))
 
-(defun shm-item-for-child-nodes-with-matching-parent ()
-  (popup-make-item "⚒ raise" :value raise-child))
-
 (defun shm-item-for-module-name ()
   (popup-make-item "✈ visit module" :value visit-module-definition))
 
@@ -135,7 +129,6 @@
 (defun shm-invoke-action-for-menu-item (item-value)
   "Invoke function on (ITEM-VALUE) chosen from the context menu."
   (cond ((selected-item-value-p item-value qualify-import) (invoke-with-suggestion 'shm/qualify-import))
-        ((selected-item-value-p item-value raise-child) (invoke-with-suggestion 'shm/raise))
         ((selected-item-value-p item-value visit-module-definition) (invoke-with-suggestion 'haskell-mode-tag-find))
         ((selected-item-value-p item-value hlint-suggestion) (invoke-with-suggestion 'shm-invoke-hlint-suggestion (cdr item-value)))
         ((selected-item-value-p item-value create-top-level-function-from-lambda) (invoke-with-suggestion 'shm/move-lambda-to-top-level))

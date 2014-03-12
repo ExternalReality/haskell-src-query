@@ -3,8 +3,6 @@
 ;;; Commentary:
 (require 'shm-node)
 
-(defconst query-program-name "haskell-src-query")
-
 (defun haskell-src-query (query node &optional filePath)
   (let ((message-log-max nil)
         (end (shm-node-end node))
@@ -19,7 +17,7 @@
           (with-current-buffer buffer
             (condition-case e
                 (call-process-region start end
-                                     query-program-name
+                                     shm-program-name
                                      nil
                                      temp-buffer
                                      nil

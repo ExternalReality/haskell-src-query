@@ -9,6 +9,9 @@ import Client
 import HLint
 import Lambda
 import ParseAST
+------------------------------------------------------------------------------
+import Distribution.PackageDescription.Parse
+import Distribution.Verbosity
 
 ------------------------------------------------------------------------------
 data Query = FreeVariables

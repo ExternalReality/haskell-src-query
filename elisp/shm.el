@@ -34,6 +34,7 @@
 (require 'shm-node)
 (require 'shm-lambda)
 (require 'shm-context-menu)
+(require 'hsq-cabal)
 
 (require 'cl)
 (require 'json)

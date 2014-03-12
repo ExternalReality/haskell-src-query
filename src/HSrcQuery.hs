@@ -4,6 +4,7 @@ module Main where
 
 import Options.Applicative
 ------------------------------------------------------------------------------
+import Cabal
 import Client
 import HLint
 import Lambda
@@ -15,6 +16,7 @@ data Query = FreeVariables
            | LambdaArgs
            | HLint
            | ParseAST
+           | BuildTargets
              deriving Show
 
 ------------------------------------------------------------------------------
@@ -77,6 +79,7 @@ parseQueryArg s | s == "freeVariables" = Just FreeVariables
                 | s == "lambdaArgs"    = Just LambdaArgs
                 | s == "hlint"         = Just HLint
                 | s == "parse"         = Just ParseAST
+                | s == "targets"       = Just BuildTargets
                 | otherwise            = Nothing
 
 ------------------------------------------------------------------------------
@@ -104,10 +107,16 @@ runQuery FreeVariables srcFile
                 cabalFilePath
                 buildTargetName
                 code
-runQuery LambdaBody _ _ _ _ code = return $ lambdaBody code
-runQuery LambdaArgs _ _ _ _ code = return $ lambdaArgs code
-runQuery HLint      _ _ _ _ code = hlint code
-runQuery ParseAST   _ _ _ _ code = return $ parseAST code
+runQuery LambdaBody   _ _ _ _ code = return $ lambdaBody code
+runQuery LambdaArgs   _ _ _ _ code = return $ lambdaArgs code
+runQuery HLint        _ _ _ _ code = hlint code
+runQuery ParseAST     _ _ _ _ code = return $ parseAST code
+runQuery BuildTargets _ _ cabaFilePath _ _ = targets cabaFilePath
+
 
 ------------------------------------------------------------------------------
-fn c = (\a b -> a + b) c
+targets :: FilePath -> IO String
+targets cabalFilePath =  do 
+  gpDesc <- readPackageDescription silent cabalFilePath
+  return . show . buildTargetNames' $ gpDesc 
+

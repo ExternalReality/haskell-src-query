@@ -19,22 +19,16 @@ isInModuleScope filePath pkgConfigPath cabalFilePath buildTargetName symName = d
   where
     search = do
       let packageConfigOption = ghcOptionPkgConfig pkgConfigPath
-      maybeOptionSrcDirs <- ghcOptionSrcDirs cabalFilePath buildTargetName 
-      case maybeOptionSrcDirs of
-        Just optionSrcDirs -> do 
-          let args = ["info", filePath, symName, packageConfigOption] ++ optionSrcDirs
-          readProcessWithExitCode hdevtools args ""
-        Nothing -> readProcessWithExitCode hdevtools ["info", filePath, symName, packageConfigOption]  ""
-                                                                         
+      srcDirs <- ghcOptionSrcDirs cabalFilePath buildTargetName 
+      let args = ["info", filePath, symName, packageConfigOption] ++ srcDirs
+      readProcessWithExitCode hdevtools args ""
+                                                                               
 ------------------------------------------------------------------------------
-ghcOptionSrcDirs :: String -> String ->  IO (Maybe [String])
+ghcOptionSrcDirs :: String -> String ->  IO [String]
 ghcOptionSrcDirs cabalFilePath buildTargetName = do 
-  maybeSrcDirs <- buildTargetSrcDirs cabalFilePath buildTargetName
-  case maybeSrcDirs of
-    Just srcDirs -> return $ Just $ map ghcOptionSrcDir srcDirs
-    Nothing      -> return $ Nothing
-
-
+  srcDirs <- buildTargetSrcDirs cabalFilePath buildTargetName
+  return $ map ghcOptionSrcDir srcDirs
+ 
 ------------------------------------------------------------------------------
 hdevtools :: String           
 hdevtools = "hdevtools"

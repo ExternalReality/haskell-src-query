@@ -2,13 +2,15 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module ParseAST (parseAST) where
+module ParseAST (parseAST, parseTopLevel) where
 
+------------------------------------------------------------------------------
+import Language.Haskell.Exts.Annotated
+------------------------------------------------------------------------------
 import Control.Applicative
 import Data.Data
 import Data.List
 import Data.Maybe
-import Language.Haskell.Exts.Annotated
 
 ------------------------------------------------------------------------------
 data D = forall a. Data a => D a

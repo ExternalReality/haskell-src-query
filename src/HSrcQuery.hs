@@ -5,7 +5,6 @@ module Main where
 import Options.Applicative
 ------------------------------------------------------------------------------
 import Cabal
-import Client
 import HLint
 import Lambda
 import ParseAST
@@ -24,7 +23,6 @@ data Query = FreeVariables
 
 ------------------------------------------------------------------------------
 data Request = Request  { query            :: Query
-                        , client           :: Client
                         , srcFilePath      :: FilePath
                         , pkgConfigDirPath :: FilePath
                         , cabalFilePath    :: FilePath
@@ -36,9 +34,6 @@ requestParser :: Parser Request
 requestParser = Request <$> argument parseQueryArg
                         ( metavar "QUERY"
                           <> help "Query to run on selected code.")
-                  <*> argument parseClientArg
-                        ( metavar "CLIENT"
-                          <> help "Client Emacs or Sublime" )
                   <*> strOption ( long "source-file"
                                        <> metavar "FILE"
                                        <> help "File containing selected code."
@@ -84,12 +79,6 @@ parseQueryArg s | s == "freeVariables" = Just FreeVariables
                 | s == "parse"         = Just ParseAST
                 | s == "targets"       = Just BuildTargets
                 | otherwise            = Nothing
-
-------------------------------------------------------------------------------
-parseClientArg :: String -> Maybe Client
-parseClientArg s | s == "SublimeText" = Just SublimeText
-                 | s == "Emacs"       = Just Emacs
-                 | otherwise          = Nothing
 
 ------------------------------------------------------------------------------
 runQuery

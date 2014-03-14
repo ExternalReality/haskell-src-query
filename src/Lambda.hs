@@ -1,20 +1,14 @@
 module Lambda ( freeVariables
               , lambdaArgs
               , lambdaBody
-              , allVariables
-              , allBindings
-              , allNames
-              , extractFreeVariables
               ) where
 
 import Control.Monad
-import Data.Generics.Aliases
-import Data.Generics.Schemes
-import Data.List
 import Data.Char
 import Language.Haskell.Exts
 ------------------------------------------------------------------------------
 import HDevTools
+import SourceQuery
 
 ------------------------------------------------------------------------------
 freeVariables :: FilePath -> FilePath -> FilePath -> String -> String -> IO String
@@ -43,34 +37,7 @@ lambdaArgs code = case parseExp code of
                      . takeWhile (/= '-')
                      . dropWhile (== '\\')
                      . prettyPrint
-
-------------------------------------------------------------------------------
-allVariables :: GenericQ [Exp]
-allVariables = listify isVar
-
-------------------------------------------------------------------------------
-allBindings :: GenericQ [Pat]
-allBindings = listify isBinding
-
-------------------------------------------------------------------------------
-allNames :: GenericQ [String]
-allNames = everything (++) ([] `mkQ` fmap (: []) getStringFromName)
-
-------------------------------------------------------------------------------
-isVar :: Exp -> Bool
-isVar (Var  _) = True
-isVar  _       = False
-
-------------------------------------------------------------------------------
-isBinding :: Pat -> Bool
-isBinding (PVar _) = True
-isBinding _        = False
-
-------------------------------------------------------------------------------
-getStringFromName :: Name -> String
-getStringFromName (Symbol str) = str
-getStringFromName (Ident str)  = str
-
+                     
 ------------------------------------------------------------------------------
 dropCommas :: String -> String
 dropCommas = filter (/= ',')
@@ -81,24 +48,23 @@ extractLambdaBody (Lambda _ _ ast) = prettyPrint ast
 extractLambdaBody _ = "[]"
 
 ------------------------------------------------------------------------------
-extractFreeVariables :: GenericQ [String]
-extractFreeVariables ast = allNames (allVariables ast) \\
-                           allNames (allBindings ast)
-
-------------------------------------------------------------------------------
-dropModuleVariableNames :: FilePath -> FilePath -> FilePath -> String -> [String] -> IO [String]
+dropModuleVariableNames :: FilePath 
+                        -> FilePath 
+                        -> FilePath 
+                        -> String 
+                        -> [String] 
+                        -> IO [String]
 dropModuleVariableNames srcPath pkgConfigPath cabalFilePath buildTargetName  =
   filterM $  (liftM not) .  isInModuleScope srcPath
                                             pkgConfigPath
                                             cabalFilePath
                                             buildTargetName
-
-
+                                            
 ------------------------------------------------------------------------------
-
 trim :: [Char] -> [Char]
 trim xs = dropSpaceTail "" $ dropWhile isSpace xs
 
+------------------------------------------------------------------------------
 dropSpaceTail :: [Char] -> [Char] -> [Char]
 dropSpaceTail _ "" = ""
 dropSpaceTail maybeStuff (x:xs)

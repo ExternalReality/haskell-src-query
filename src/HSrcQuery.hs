@@ -3,7 +3,7 @@
 module Main where
 
 import Control.Applicative
-import Data.ByteString.Char8 (pack, unpack)
+import Data.ByteString.Char8 (unpack)
 import Distribution.PackageDescription.Parse hiding (ParseResult(..))
 import Distribution.Verbosity
 import Language.Aspell
@@ -14,6 +14,7 @@ import Cabal
 import HLint
 import Lambda
 import ParseAST
+import SourceQuery
 import SpellCheck
 
 ------------------------------------------------------------------------------

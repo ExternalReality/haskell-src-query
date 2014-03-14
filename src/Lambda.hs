@@ -1,6 +1,10 @@
 module Lambda ( freeVariables
               , lambdaArgs
               , lambdaBody
+              , allVariables
+              , allBindings
+              , allNames
+              , extractFreeVariables
               ) where
 
 import Control.Monad

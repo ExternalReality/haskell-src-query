@@ -2,20 +2,25 @@
 
 module Main where
 
+import Control.Applicative
+import Data.ByteString.Char8 (pack, unpack)
+import Distribution.PackageDescription.Parse hiding (ParseResult(..))
+import Distribution.Verbosity
+import Language.Aspell
+import Language.Haskell.Exts
 import Options.Applicative
 ------------------------------------------------------------------------------
 import Cabal
 import HLint
 import Lambda
 import ParseAST
-------------------------------------------------------------------------------
-import Distribution.PackageDescription.Parse
-import Distribution.Verbosity
+import SpellCheck
 
 ------------------------------------------------------------------------------
 data Query = FreeVariables
            | LambdaBody
            | LambdaArgs
+           | SpellCheck
            | HLint
            | ParseAST
            | BuildTargets
@@ -78,6 +83,7 @@ parseQueryArg s | s == "freeVariables" = Just FreeVariables
                 | s == "hlint"         = Just HLint
                 | s == "parse"         = Just ParseAST
                 | s == "targets"       = Just BuildTargets
+                | s == "spellcheck"    = Just SpellCheck
                 | otherwise            = Nothing
 
 ------------------------------------------------------------------------------
@@ -104,7 +110,7 @@ runQuery LambdaArgs   _ _ _ _ code = return $ lambdaArgs code
 runQuery HLint        _ _ _ _ code = hlint code
 runQuery ParseAST     _ _ _ _ code = return $ parseAST code
 runQuery BuildTargets _ _ cabaFilePath _ _ = targets cabaFilePath
-
+runQuery SpellCheck   _ _ _ _ code = spellCheck code
 
 ------------------------------------------------------------------------------
 targets :: FilePath -> IO String
@@ -112,3 +118,22 @@ targets cabalFilePath =  do
   gpDesc <- readPackageDescription silent cabalFilePath
   return . show . buildTargetNames' $ gpDesc 
 
+------------------------------------------------------------------------------
+spellCheck :: String -> IO String
+spellCheck code = case parseTopLevel parseMode code of
+  ParseOk (D ast) -> do sp <- createEnglishSpellChecker 
+                        return . show 
+                               . (misspelledBindingNames sp) 
+                               . allNames 
+                               . allBindings $ ast                      
+  ParseFailed _ _ -> error "error parsing"
+  
+------------------------------------------------------------------------------
+createEnglishSpellChecker :: IO SpellChecker
+createEnglishSpellChecker = either (error . unpack) id <$> spellChecker
+
+------------------------------------------------------------------------------
+parseTopLevel :: ParseMode -> String -> ParseResult D 
+parseTopLevel mode code =
+  D <$> parseDeclWithMode mode code   <|>
+  D <$> parseModuleWithMode mode code 

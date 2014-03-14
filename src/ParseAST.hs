@@ -2,7 +2,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module ParseAST (parseAST, parseTopLevel) where
+module ParseAST (parseAST, parseMode, D(..)) where
 
 ------------------------------------------------------------------------------
 import Language.Haskell.Exts.Annotated
@@ -14,6 +14,15 @@ import Data.Maybe
 
 ------------------------------------------------------------------------------
 data D = forall a. Data a => D a
+
+-----------------------------------------------------------------------------------------
+-- | The 'empty' method isn't (shouldn't be) used, so this isn't a
+-- real Alternative instance (perhaps a Semigroup might do?). But it's
+-- handy.
+instance Alternative ParseResult where
+  empty = ParseFailed undefined undefined
+  ParseFailed{} <|> x = x
+  x <|> _             = x
 
 ------------------------------------------------------------------------------
 parseAST :: String -> [Char]
@@ -28,15 +37,6 @@ parseTopLevel mode code =
   D       <$> parseImport mode code         <|>
   D . fix <$> parseModuleWithMode mode code <|>
   D       <$> parseModulePragma mode code
-
------------------------------------------------------------------------------------------
--- | The 'empty' method isn't (shouldn't be) used, so this isn't a
--- real Alternative instance (perhaps a Semigroup might do?). But it's
--- handy.
-instance Alternative ParseResult where
-  empty = ParseFailed undefined undefined
-  ParseFailed{} <|> x = x
-  x <|> _             = x
 
 -----------------------------------------------------------------------------------------
 fix :: AppFixity ast => ast SrcSpanInfo -> ast SrcSpanInfo

@@ -2,20 +2,20 @@
 
 module Main where
 
-import Control.Applicative
-import Data.ByteString.Char8 (unpack)
-import Distribution.PackageDescription.Parse hiding (ParseResult(..))
-import Distribution.Verbosity
-import Language.Aspell
-import Language.Haskell.Exts
-import Options.Applicative
+import           Control.Applicative
+import           Data.ByteString.Char8                 (unpack)
+import           Distribution.PackageDescription.Parse hiding (ParseResult (..))
+import           Distribution.Verbosity
+import           Language.Aspell
+import           Language.Haskell.Exts.Annotated
+import           Options.Applicative
 ------------------------------------------------------------------------------
-import Cabal
-import HLint
-import Lambda
-import ParseAST
-import SourceQuery
-import SpellCheck
+import           Cabal
+import           HLint
+import           Lambda
+import           ParseAST
+import           SourceQuery
+import           SpellCheck
 
 ------------------------------------------------------------------------------
 data Query = FreeVariables
@@ -88,14 +88,14 @@ parseQueryArg s | s == "freeVariables" = Just FreeVariables
                 | otherwise            = Nothing
 
 ------------------------------------------------------------------------------
-runQuery
-  :: Query
-     -> FilePath
-     -> FilePath
-     -> FilePath
-     -> String
-     -> String
-     -> IO String
+-- TODO make a sensible monad for queries!
+runQuery :: Query
+         -> FilePath
+         -> FilePath
+         -> FilePath
+         -> String
+         -> String
+         -> IO String
 runQuery FreeVariables srcFile
                        pkgConfigPath
                        cabalFilePath
@@ -110,31 +110,27 @@ runQuery LambdaBody   _ _ _ _ code = return $ lambdaBody code
 runQuery LambdaArgs   _ _ _ _ code = return $ lambdaArgs code
 runQuery HLint        _ _ _ _ code = hlint code
 runQuery ParseAST     _ _ _ _ code = return $ parseAST code
-runQuery BuildTargets _ _ cabaFilePath _ _ = targets cabaFilePath
+runQuery BuildTargets _ _ cabalFilePath _ _ = targets cabalFilePath
 runQuery SpellCheck   _ _ _ _ code = spellCheck code
 
 ------------------------------------------------------------------------------
 targets :: FilePath -> IO String
-targets cabalFilePath =  do 
+targets cabalFilePath = do
   gpDesc <- readPackageDescription silent cabalFilePath
-  return . show . buildTargetNames' $ gpDesc 
+  return . show . buildTargetNames' $ gpDesc
 
 ------------------------------------------------------------------------------
 spellCheck :: String -> IO String
 spellCheck code = case parseTopLevel parseMode code of
-  ParseOk (D ast) -> do sp <- createEnglishSpellChecker 
-                        return . show 
-                               . (misspelledBindingNames sp) 
-                               . allNames 
-                               . allBindings $ ast                      
+  ParseOk (D ast) -> do sp <- createEnglishSpellChecker
+                        return . show
+                               . misspelledBindingNames sp 
+                               . bindingNamesInScope $ ast
   ParseFailed _ _ -> error "error parsing"
-  
+  where
+    bindingNamesInScope ast = allNamesWithLocations (allBindings ast) ++
+                              allMatchNames (allMatches ast)
+
 ------------------------------------------------------------------------------
 createEnglishSpellChecker :: IO SpellChecker
 createEnglishSpellChecker = either (error . unpack) id <$> spellChecker
-
-------------------------------------------------------------------------------
-parseTopLevel :: ParseMode -> String -> ParseResult D 
-parseTopLevel mode code =
-  D <$> parseDeclWithMode mode code   <|>
-  D <$> parseModuleWithMode mode code 

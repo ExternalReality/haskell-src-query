@@ -166,7 +166,7 @@ child, and in fact is common."
 (defun shm-top-level-type-decl-p (node-pair)
   (let ((current-node (cdr node-pair)))
     (if (and (not (shm-has-parent-with-matching-type-p node-pair))
-             (string= "Type SrcSpanInfo" (shm-node-type current-node))) t)))
+             (string= "Type" (shm-node-type current-node))) t)))
 
 (defun shm-node-description (node)
   "Generate a description of the given node suitable to be put in

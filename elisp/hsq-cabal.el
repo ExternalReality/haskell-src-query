@@ -18,7 +18,6 @@
 			    temp-buffer
 			    nil
 			    "targets"
-			    "Emacs"
 			    (format "--cabal-file=%s" cabal-file))
 	    ((file-error)
 	     (error "cannot find haskell-src-query executable")))))
@@ -30,6 +29,5 @@
    (haskell-session-set-target (haskell-session)
     (ido-completing-read "Build Target:" 
 			 (append (haskell-src-query-build-targets) nil))))
-
 
 (provide 'hsq-cabal)

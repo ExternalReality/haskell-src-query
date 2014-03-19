@@ -21,7 +21,7 @@ genIdeas code =  do
   (parseFlags, classifications, hint) <- autoSettings
   eitherErrorModule <- parseModuleEx parseFlags "" (Just code)
   case eitherErrorModule of
-     Left _    -> error "error parsing code" 
+     Left _    -> return []
      Right msi -> return $ applyHints classifications hint [msi]
 
 ------------------------------------------------------------------------------

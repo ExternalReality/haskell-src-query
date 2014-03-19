@@ -1,16 +1,16 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE RecordWildCards           #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module ParseAST (parseAST, parseMode, D(..)) where
+module ParseAST (parseAST, parseMode, parseTopLevel, D(..)) where
 
 ------------------------------------------------------------------------------
-import Language.Haskell.Exts.Annotated
+import           Language.Haskell.Exts.Annotated
 ------------------------------------------------------------------------------
-import Control.Applicative
-import Data.Data
-import Data.List
-import Data.Maybe
+import           Control.Applicative
+import           Data.Data
+import           Data.List
+import           Data.Maybe
 
 ------------------------------------------------------------------------------
 data D = forall a. Data a => D a
@@ -31,7 +31,7 @@ parseAST code = case parseTopLevel parseMode code of
   ParseFailed _ _ -> "[]"
 
 -----------------------------------------------------------------------------------------
-parseTopLevel :: ParseMode -> String -> ParseResult D 
+parseTopLevel :: ParseMode -> String -> ParseResult D
 parseTopLevel mode code =
   D . fix <$> parseDeclWithMode mode code   <|>
   D       <$> parseImport mode code         <|>
@@ -40,7 +40,7 @@ parseTopLevel mode code =
 
 -----------------------------------------------------------------------------------------
 fix :: AppFixity ast => ast SrcSpanInfo -> ast SrcSpanInfo
-fix ast = fromMaybe ast (applyFixities baseFixities ast) 
+fix ast = fromMaybe ast (applyFixities baseFixities ast)
 
 -----------------------------------------------------------------------------------------
 -- | Pre-children tweaks for a given parent at index i.
@@ -77,7 +77,7 @@ pre x i =
 spanHSE :: String -> String -> SrcSpan -> String
 spanHSE typ cons SrcSpan{..} = "[" ++ (intercalate "," spanContent) ++ "]"
   where unqualify   = dropUntilLast '.'
-        spanContent = [ show $ dropSrcSpanText (filter (/= '"') (unqualify typ)) 
+        spanContent = [ show $ dropSrcSpanText (filter (/= '"') (unqualify typ))
                       , show cons
                       , show srcSpanStartLine
                       , show srcSpanStartColumn

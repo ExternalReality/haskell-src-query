@@ -35,6 +35,7 @@
 (require 'shm-lambda)
 (require 'shm-context-menu)
 (require 'hsq-cabal)
+(require 'hsq-spellcheck)
 
 (require 'cl)
 (require 'json)
@@ -173,7 +174,8 @@ state that will hopefully be garbage collected."
 (defun shm-reparsing-timer ()
   "Re-parse the tree on the idle timer."
   (when structured-haskell-mode
-    (shm/reparse)))
+    (shm/reparse)
+    (hsq/spellcheck)))
 
 
 (defun shm-decl-ast (&optional reparse)
@@ -264,8 +266,7 @@ imagine."
                                      nil
                                      temp-buffer
                                      nil
-                                     "parse"
-                                     "Emacs")
+                                     "parse")
               ((file-error)
                (error "Unable to find structured-haskell-mode executable! See README for help.")))))
         (json-read-from-string (buffer-string))))))
@@ -285,8 +286,7 @@ imagine."
                                      nil
                                      temp-buffer
                                      nil
-                                     "hlint"
-                                     "Emacs")
+                                     "hlint")
               ((file-error)
                (error "Unable to find structured-haskell-mode executable! See README for help.")))))
         (read (buffer-string))))))
@@ -397,6 +397,89 @@ expected to work."
       (shm-adjust-dependents (point) (* -1 (- (point) to-be-deleted))))
     (backward-kill-word 1)))
 
+(defun shm-appropriate-adjustment-point ()
+  "Go to the appropriate adjustment point.
+
+This is called before calling `shm-adjust-dependents', because some places, e.g.
+
+zoo = do
+  bar
+  mu
+
+If the point is at 'z', then we should *not* move 'bar' or 'mu',
+even though we normally would. To avoid doing this, we use a very
+simple but 90% effective (100% is rather hard, will not be
+appearing in a beta version) heuristic. We jump to here:
+
+zoo| = do
+  bar
+  mu
+
+And use our normal adjustment test there. After all, only thing
+after 'zoo' are *really* dependent."
+  (let ((current (shm-current-node)))
+    (when (and current
+               (<= (shm-node-end current) (line-end-position)))
+      (goto-char (shm-node-end current)))))
+
+
+
+(defun shm-adjust-dependents (end-point n)
+  "Adjust dependent lines by N characters that depend on this
+line after END-POINT."
+  (unless (= (line-beginning-position)
+             (1- (point)))
+    (let ((line (line-number-at-pos))
+          (column (current-column)))
+      (when (and (not (< column (shm-indent-spaces)))
+                 (not (and (looking-back "^[ ]+")
+                           (looking-at "[ ]*")))
+                 (save-excursion (goto-char end-point)
+                                 (forward-word)
+                                 (= (line-number-at-pos) line)))
+        (unless (save-excursion
+                  (goto-char (line-end-position))
+                  (let ((current-pair (shm-node-backwards)))
+                    (when current-pair
+                      (string= (shm-node-type-name (cdr current-pair))
+                               "Rhs"))))
+          (shm-move-dependents n
+                               end-point))))))
+
+(defun shm-move-dependents (n point)
+  "Move dependent-with-respect-to POINT lines N characters forwards or backwards.
+
+This is purely based on alignments. If anything is aligned after
+the current column, then it's assumed to be a child of whatever
+has recently changed at POINT, and thus we 'bring it along'
+either forwards or backwards.
+
+The algorithm isn't quite comprehensive, it needs special cases
+for top-level functions and things like that."
+  (save-excursion
+    (let ((column (progn (goto-char point)
+                         (current-column)))
+          (point nil)
+          (end-point nil))
+      (while (and (= 0 (forward-line 1))
+                  (or (not end-point)
+                      (/= end-point (line-end-position))))
+        (if (shm-line-indented-past (1+ column))
+            (progn (unless point
+                     (setq point (goto-char (line-beginning-position))))
+                   (setq end-point (line-end-position)))
+          (goto-char (point-max))))
+      (when end-point
+        (indent-rigidly point end-point n)))))
+
+(defun shm-line-indented-past (n)
+  "Is the current line indented past N?"
+  (goto-char (line-beginning-position))
+  (let ((column (search-forward-regexp "[^ ]" (line-end-position) t 1)))
+    (if column
+        (>= (1- (current-column)) n)
+      t)))
+
 (defun shm/delete ()
   "Delete the current node."
   (interactive)
@@ -411,6 +494,12 @@ expected to work."
   (let ((current (shm-current-node)))
     (goto-char (shm-node-start current))
     (set-mark (shm-node-end current))))
+
+(defun shm-indent-spaces ()
+  "Get the number of spaces to indent."
+  (if (boundp 'haskell-indent-spaces)
+      haskell-indent-spaces
+    shm-indent-spaces))
 
 (defun shm/type-of-node ()
   (interactive)

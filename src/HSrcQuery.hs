@@ -2,30 +2,43 @@
 
 module Main where
 
-import           Control.Applicative
-import           Data.ByteString.Char8                 (unpack)
-import           Distribution.PackageDescription.Parse hiding (ParseResult (..))
-import           Distribution.Verbosity
-import           Language.Aspell
-import           Language.Haskell.Exts.Annotated
-import           Options.Applicative
+import Control.Applicative
+import Data.ByteString.Char8                 (unpack, pack)
+import Distribution.PackageDescription.Parse hiding (ParseResult (..))
+import Distribution.Verbosity
+import Language.Aspell
+import Language.Haskell.Exts.Annotated
+import Options.Applicative
 ------------------------------------------------------------------------------
-import           Cabal
-import           HLint
-import           Lambda
-import           ParseAST
-import           SourceQuery
-import           SpellCheck
+import Cabal
+import HLint
+import Lambda
+import ParseAST
+import SourceQuery
+import SpellCheck
 
 ------------------------------------------------------------------------------
 data Query = FreeVariables
            | LambdaBody
            | LambdaArgs
            | SpellCheck
+           | SpellSuggest
            | HLint
            | ParseAST
            | BuildTargets
              deriving Show
+
+------------------------------------------------------------------------------
+parseQueryArg :: String -> Maybe Query
+parseQueryArg s | s == "freeVariables" = Just FreeVariables
+                | s == "lambdaBody"    = Just LambdaBody
+                | s == "lambdaArgs"    = Just LambdaArgs
+                | s == "hlint"         = Just HLint
+                | s == "parse"         = Just ParseAST
+                | s == "targets"       = Just BuildTargets
+                | s == "spellcheck"    = Just SpellCheck
+                | s == "spellsuggest"  = Just SpellSuggest
+                | otherwise            = Nothing
 
 ------------------------------------------------------------------------------
 data Request = Request  { query            :: Query
@@ -33,7 +46,7 @@ data Request = Request  { query            :: Query
                         , pkgConfigDirPath :: FilePath
                         , cabalFilePath    :: FilePath
                         , buildTargetName  :: String
-                        }
+                        }                        
 
 ------------------------------------------------------------------------------
 requestParser :: Parser Request
@@ -77,17 +90,6 @@ main = do
                         code
 
 ------------------------------------------------------------------------------
-parseQueryArg :: String -> Maybe Query
-parseQueryArg s | s == "freeVariables" = Just FreeVariables
-                | s == "lambdaBody"    = Just LambdaBody
-                | s == "lambdaArgs"    = Just LambdaArgs
-                | s == "hlint"         = Just HLint
-                | s == "parse"         = Just ParseAST
-                | s == "targets"       = Just BuildTargets
-                | s == "spellcheck"    = Just SpellCheck
-                | otherwise            = Nothing
-
-------------------------------------------------------------------------------
 -- TODO make a sensible monad for queries!
 runQuery :: Query
          -> FilePath
@@ -112,6 +114,7 @@ runQuery HLint        _ _ _ _ code = hlint code
 runQuery ParseAST     _ _ _ _ code = return $ parseAST code
 runQuery BuildTargets _ _ cabalFilePath _ _ = targets cabalFilePath
 runQuery SpellCheck   _ _ _ _ code = spellCheck code
+runQuery SpellSuggest _ _ _ _ code = spellSuggest code
 
 ------------------------------------------------------------------------------
 targets :: FilePath -> IO String
@@ -130,6 +133,13 @@ spellCheck code = case parseTopLevel parseMode code of
   where
     bindingNamesInScope ast = allNamesWithLocations (allBindings ast) ++
                               allMatchNames (allMatches ast)
+                                                           
+------------------------------------------------------------------------------
+spellSuggest :: String -> IO String
+spellSuggest bindingName = do 
+  sp <- createEnglishSpellChecker
+  suggestions <- bindingNameSuggestion sp bindingName
+  return . show $ suggestions 
 
 ------------------------------------------------------------------------------
 createEnglishSpellChecker :: IO SpellChecker

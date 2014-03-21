@@ -6,6 +6,7 @@
 (require 'shm-node)
 (require 'shm-refactor)
 (require 'shm-lambda)
+(require 'hsq-spellcheck)
 (require 'popup)
 
 (defconst qualify-import "qualify import")
@@ -13,6 +14,7 @@
 (defconst hlint-suggestion "hlint suggestion")
 (defconst create-top-level-function-from-lambda "create top level function from lambda")
 (defconst add-type-constraint "add type constraint")
+(defconst spelling-suggestion "spelling suggestion")
 
 (defun shm/collapse-nested-lambda ()
   (let* ((current-node (shm-current-node))
@@ -27,7 +29,10 @@
          (current (cdr pair))
          (cons (shm-node-cons current))
          (refactors (shm-get-refactors current))
+         (spelling-suggestions (append (hsq-spellsuggest-node current) nil))
          (menu nil))
+    (when spelling-suggestions
+      (add-to-list 'menu (shm-item-for-spelling-suggestions spelling-suggestions)))
     (when (shm-node-lambda-p current)
       (add-to-list 'menu (shm-item-for-lambda)))
     (when (shm-refactors-available-p refactors)
@@ -39,21 +44,22 @@
     (when (and (shm-module-name-p cons)
                (fboundp (quote haskell-mode-tag-find)))
       (add-to-list 'menu (shm-item-for-module-name)))
-    (if menu 
-        (progn 
-          (cancel-timer shm-parsing-timer)
-          (unwind-protect 
-              (shm-invoke-action-for-menu-item (popup-menu* menu))
-            (setq shm-parsing-timer
-                  (run-with-idle-timer shm-idle-timeout t 'shm-reparsing-timer)))))))
-
-;; collapse any nested lambdas
-;; compare arg list to variables in defintion
-;; turn free variables into application
-;; insert application surrounded by parens
-;; check parent node for redundant parens
+    (when menu 
+      (cancel-timer shm-parsing-timer)
+      (unwind-protect 
+          (shm-invoke-action-for-menu-item (popup-cascade-menu menu :width (max-of-menu menu)))
+        (setq shm-parsing-timer
+              (run-with-idle-timer shm-idle-timeout t 'shm-reparsing-timer))))))
 
 
+(defun string-or-car-of-string-list (elem)
+  (if (and (listp elem) (not (stringp elem))) 
+      (car elem)
+    elem))
+
+(defun max-of-menu (menu)
+  (apply 'max (mapcar 'length (mapcar 'string-or-car-of-string-list menu))))
+      
 (defun shm/move-lambda-to-top-level ()
   (let* ((function-name (read-from-minibuffer "function name: "))
          (current-node-pair (shm-current-node-pair))
@@ -106,6 +112,16 @@
       (goto-char start)      
       (insert (elt refactor 3)))))
 
+(defun hsq/invoke-spelling-suggestion (suggestion)
+  "Replace the current node with the spelling (SPELLING-SUGGESTION)."
+  (let* ((current-node (shm-current-node))
+         (start (shm-node-start current-node))
+         (end (shm-node-end current-node)))
+    (save-excursion
+      (delete-region start end)
+      (goto-char start)      
+      (insert suggestion))))
+
 (defun shm-start-refactor-line (refactor)
   "Get the starting line of (REFACTOR) relative to the context in which it was found."
   (elt refactor 4))
@@ -126,12 +142,19 @@
 (defun shm-item-for-lambda ()
   (popup-make-item (concat "⚒ " "create top-level function from lambda") :value create-top-level-function-from-lambda))
 
+(defun shm-item-for-spelling-suggestions (suggestions)
+  (popup-make-item (concat "✎ " "spelling suggestions" " ▶") :sublist (mapcar 'make-suggestion-item suggestions)))
+
+(defun make-suggestion-item (suggestion)
+  (popup-make-item suggestion :value (cons spelling-suggestion suggestion)))
+
 (defun shm-invoke-action-for-menu-item (item-value)
   "Invoke function on (ITEM-VALUE) chosen from the context menu."
   (cond ((selected-item-value-p item-value qualify-import) (invoke-with-suggestion 'shm/qualify-import))
         ((selected-item-value-p item-value visit-module-definition) (invoke-with-suggestion 'haskell-mode-tag-find))
         ((selected-item-value-p item-value hlint-suggestion) (invoke-with-suggestion 'shm-invoke-hlint-suggestion (cdr item-value)))
         ((selected-item-value-p item-value create-top-level-function-from-lambda) (invoke-with-suggestion 'shm/move-lambda-to-top-level))
+        ((selected-item-value-p item-value spelling-suggestion) (invoke-with-suggestion 'hsq/invoke-spelling-suggestion (cdr item-value)))
         ((selected-item-value-p item-value add-type-constraint) (invoke-with-suggestion 'shm/modify-type-constraint))))
 
 (defun selected-item-value-p (value match)

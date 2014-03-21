@@ -202,6 +202,9 @@ child, and in fact is common."
       (cons (1+ i)
             (elt vector (1+ i))))))
 
+(defun shm-pvar-p (node)
+  (string= (shm-node-cons node) "PVar"))
+
 (defun shm-module-name-p (node-cons)
  "Is the node a module name"
   (string= "ModuleName" node-cons))

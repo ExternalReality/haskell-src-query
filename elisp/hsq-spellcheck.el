@@ -13,6 +13,24 @@
   (remove-overlays nil nil 'name 'hsq-misspelling)
   (hsq-haskell-spellcheck-top-level-decl))
 
+(defun hsq/spellsuggestions ()
+  (let (current-node (shm-current-node))
+    (hsq-spellsuggestions (current-node))))
+
+(defun hsq-spellsuggest-node (node)
+  (let* ((misspellings (hsq-spellcheck-top-level-decl))
+         (misspelled-names (cl-map 'list 'hsq-name-misspelling misspellings))
+         (name (shm-concrete-syntax-for-node node)))
+    (when (member name misspelled-names)
+      (hsq-spellsuggest (shm-node-start node)
+                        (shm-node-end node)))))
+
+(defun hsq-spellcheck-top-level-decl ()
+  (let* ((points (shm-decl-points))
+         (start (car points))
+         (end (cdr points)))
+    (hsq-spellcheck start end)))
+
 (defun hsq-haskell-spellcheck-top-level-decl ()
   (let* ((points (shm-decl-points))
          (start (car points))
@@ -20,7 +38,13 @@
          (misspellings (hsq-spellcheck start end)))
     (hsq-underline-misspellings misspellings)))
 
-(defun hsq-spellcheck (start end)
+(defun hsq-spellquery (start end)
+  (hsq-spellquery start end "spellcheck"))
+
+(defun hsq-spellsuggest (start end)
+  (hsq-spellquery start end "spellsuggest"))
+
+(defun hsq-spellquery (start end query)
   "Spell check the current top level declaration."
   (let ((message-log-max nil)
         (buffer (current-buffer)))
@@ -35,7 +59,7 @@
                                      nil
                                      temp-buffer
                                      nil
-                                     "spellcheck")
+                                     query)
               ((file-error)
                (error "Unable to find structured-haskell-mode executable! See README for help.")))))
         (json-read-from-string (buffer-string))))))
@@ -74,6 +98,9 @@
       (when (> rel 0) (forward-line rel))
       (forward-char rec)
       (point))))
+
+(defun hsq-name-misspelling (mispelling)
+  (elt mispelling 0))
 
 (defun hsq-start-line-misspelling (misspelling)
   (1- (string-to-number (elt misspelling 1))))

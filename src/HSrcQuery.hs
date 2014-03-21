@@ -46,7 +46,7 @@ data Request = Request  { query            :: Query
                         , pkgConfigDirPath :: FilePath
                         , cabalFilePath    :: FilePath
                         , buildTargetName  :: String
-                        }                        
+                        }
 
 ------------------------------------------------------------------------------
 requestParser :: Parser Request
@@ -119,27 +119,27 @@ runQuery SpellSuggest _ _ _ _ code = spellSuggest code
 ------------------------------------------------------------------------------
 targets :: FilePath -> IO String
 targets cabalFilePath = do
-  gpDesc <- readPackageDescription silent cabalFilePath
-  return . show . buildTargetNames' $ gpDesc
+  gPDesc <- readPackageDescription silent cabalFilePath
+  return . show . buildTargetNames' $ gPDesc
 
 ------------------------------------------------------------------------------
 spellCheck :: String -> IO String
 spellCheck code = case parseTopLevel parseMode code of
   ParseOk (D ast) -> do sp <- createEnglishSpellChecker
                         return . show
-                               . misspelledBindingNames sp 
+                               . misspelledBindingNames sp
                                . bindingNamesInScope $ ast
   ParseFailed _ _ -> error "error parsing"
   where
     bindingNamesInScope ast = allNamesWithLocations (allBindings ast) ++
                               allMatchNames (allMatches ast)
-                                                           
+
 ------------------------------------------------------------------------------
 spellSuggest :: String -> IO String
-spellSuggest bindingName = do 
+spellSuggest bindingName = do
   sp <- createEnglishSpellChecker
   suggestions <- bindingNameSuggestion sp bindingName
-  return . show $ suggestions 
+  return . show $ suggestions
 
 ------------------------------------------------------------------------------
 createEnglishSpellChecker :: IO SpellChecker

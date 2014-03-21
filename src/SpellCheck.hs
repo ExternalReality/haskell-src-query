@@ -8,6 +8,10 @@ import Language.Aspell
 import Text.Inflections
 import Text.Inflections.Parse.Types
 
+-- data Misspelling = Mispelling { misspelledName     :: String
+--                               , misspelledSegments :: String
+--                               }
+
 ------------------------------------------------------------------------------
 bindingNameSuggestion :: SpellChecker -> String -> IO [String]
 bindingNameSuggestion sp bindingName = do
@@ -29,7 +33,13 @@ constituentSuggestions sp (Word s)   | check sp (pack s) = return [s]
 ------------------------------------------------------------------------------
 combineConstituentSuggestion :: [[String]] -> [String]
 combineConstituentSuggestion [] = []
-combineConstituentSuggestion suggestions = foldl1 (combineM) suggestions
+combineConstituentSuggestion suggestions = take 10
+                                         . filterPunctuation 
+                                         . (foldl1 (combineM)) $ suggestions
+ where 
+   filterPunctuation = filter (\s -> (notElem '\'' s) && 
+                                     (notElem ' ' s)  &&
+                                     (notElem '-' s))
 
 ------------------------------------------------------------------------------
 combineM :: Monoid a => [a] -> [a] -> [a]

@@ -6,7 +6,8 @@ module SourceQuery ( allNames
                    , allBindings
                    , allNamesWithLocations
                    , allMatches
-                   , allMatchNames
+                   , allBindingNames
+                   , nameString
                    ) where
 
 
@@ -34,20 +35,23 @@ allMatches :: GenericQ [Match SrcSpanInfo]
 allMatches = listify isMatch
 
 ------------------------------------------------------------------------------
-matchNames :: [Match SrcSpanInfo] -> [[String]]
-matchNames names = map matchName names
-  where matchName (Match _ (Ident l s)  _ _ _ ) = nameLocations l s 
-        matchName (Match _ (Symbol l s)  _ _ _ ) = nameLocations l s
-        matchName (InfixMatch _ _ (Ident l s) _ _ _) = nameLocations l s
-        matchName (InfixMatch _ _ (Symbol l s) _ _ _) = nameLocations l s
+matchName :: Match SrcSpanInfo -> Name SrcSpanInfo
+matchName (Match _ mn _ _ _ )       = mn
+matchName (InfixMatch _ _ mn _ _ _) = mn
         
 ------------------------------------------------------------------------------
-allMatchNames :: GenericQ [[String]]
-allMatchNames = ([] `mkQ` matchNames)
+allBindingNames :: GenericQ [Name SrcSpanInfo]
+allBindingNames = everything (++) ([] `mkQ` (return . matchName) `extQ` pVarName)
 
 ------------------------------------------------------------------------------
 allNames :: GenericQ [String]
 allNames = allNamesWith nameString
+
+------------------------------------------------------------------------------
+pVarName :: Pat SrcSpanInfo -> [Name SrcSpanInfo]
+pVarName (PVar _ patName)     = return patName
+pVarName (PAsPat _ patName _) = return patName
+pVarName _                    = []
 
 ------------------------------------------------------------------------------
 allNamesWithLocations :: GenericQ [[String]]

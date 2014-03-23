@@ -14,8 +14,8 @@
   (hsq-haskell-spellcheck-top-level-decl))
 
 (defun hsq/spellsuggestions ()
-  (let (current-node (shm-current-node))
-    (hsq-spellsuggestions (current-node))))
+  (let ((current-node (shm-current-node)))
+    (hsq-spellsuggest-node current-node)))
 
 (defun hsq-spellsuggest-node (node)
   (let* ((misspellings (hsq-spellcheck-top-level-decl))
@@ -38,7 +38,7 @@
          (misspellings (hsq-spellcheck start end)))
     (hsq-underline-misspellings misspellings)))
 
-(defun hsq-spellquery (start end)
+(defun hsq-spellcheck (start end)
   (hsq-spellquery start end "spellcheck"))
 
 (defun hsq-spellsuggest (start end)
@@ -78,7 +78,7 @@
     (overlay-put misspelling-overlay 'name 'hsq-misspelling)))
 
 (defun hsq-misspelling-start-location (misspelling)
-  "Get the starting position of the (MISSPELLING) relative to its top level declaration."
+  "Get the starting position of the (MISSPELLING) relative to its top level declaration."      
   (let ((start (car (shm-decl-points)))
         (rsl (hsq-start-line-misspelling misspelling))
         (rsc (hsq-start-column-misspelling misspelling)))
@@ -99,19 +99,25 @@
       (forward-char rec)
       (point))))
 
-(defun hsq-name-misspelling (mispelling)
-  (elt mispelling 0))
+(defun location (misspelling)
+  (cdr (assoc 'location misspelling)))
+
+(defun hsq-name-misspelling (misspelling)
+  (cdr (assoc 'misspelledName misspelling)))
+
+(defun hsq-spelling-location (index)
+  (1- (elt (location misspelling) index)))
 
 (defun hsq-start-line-misspelling (misspelling)
-  (1- (string-to-number (elt misspelling 1))))
-
-(defun hsq-start-column-misspelling (misspelling)
-  (1- (string-to-number (elt misspelling 2))))
+  (hsq-spelling-location 0))
 
 (defun hsq-end-line-misspelling (misspelling)
-  (1- (string-to-number (elt misspelling 3))))
+  (hsq-spelling-location 1))
+
+(defun hsq-start-column-misspelling (misspelling)
+  (hsq-spelling-location 2))
 
 (defun hsq-end-column-misspelling (misspelling)
-  (1- (string-to-number (elt misspelling 4))))
+  (hsq-spelling-location 3))
 
 (provide 'hsq-spellcheck)

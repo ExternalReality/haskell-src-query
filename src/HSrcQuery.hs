@@ -2,20 +2,22 @@
 
 module Main where
 
-import Control.Applicative
-import Data.ByteString.Char8                 (unpack, pack)
-import Distribution.PackageDescription.Parse hiding (ParseResult (..))
-import Distribution.Verbosity
-import Language.Aspell
-import Language.Haskell.Exts.Annotated
-import Options.Applicative
+import           Control.Applicative
+import           Data.Aeson
+import           Data.ByteString.Char8                 (pack, unpack)
+import qualified Data.ByteString.Lazy.Char8            as DBL
+import           Distribution.PackageDescription.Parse hiding (ParseResult (..))
+import           Distribution.Verbosity
+import           Language.Aspell
+import           Language.Haskell.Exts.Annotated
+import           Options.Applicative
 ------------------------------------------------------------------------------
-import Cabal
-import HLint
-import Lambda
-import ParseAST
-import SourceQuery
-import SpellCheck
+import           Cabal
+import           HLint
+import           Lambda
+import           ParseAST
+import           SourceQuery
+import           SpellCheck
 
 ------------------------------------------------------------------------------
 data Query = FreeVariables
@@ -126,13 +128,11 @@ targets cabalFilePath = do
 spellCheck :: String -> IO String
 spellCheck code = case parseTopLevel parseMode code of
   ParseOk (D ast) -> do sp <- createEnglishSpellChecker
-                        return . show
+                        return . DBL.unpack
+                               . encode
                                . misspelledBindingNames sp
-                               . bindingNamesInScope $ ast
+                               . allBindingNames $ ast
   ParseFailed _ _ -> error "error parsing"
-  where
-    bindingNamesInScope ast = allNamesWithLocations (allBindings ast) ++
-                              allMatchNames (allMatches ast)
 
 ------------------------------------------------------------------------------
 spellSuggest :: String -> IO String

@@ -3,6 +3,7 @@
 module Main where
 
 import Options.Applicative
+import Options.Applicative.Types
 ------------------------------------------------------------------------------
 import Cabal
 import Client
@@ -76,20 +77,33 @@ main = do
                         code
 
 ------------------------------------------------------------------------------
-parseQueryArg :: String -> Maybe Query
-parseQueryArg s | s == "freeVariables" = Just FreeVariables
-                | s == "lambdaBody"    = Just LambdaBody
-                | s == "lambdaArgs"    = Just LambdaArgs
-                | s == "hlint"         = Just HLint
-                | s == "parse"         = Just ParseAST
-                | s == "targets"       = Just BuildTargets
-                | otherwise            = Nothing
+parseQueryArg :: ReadM Query
+parseQueryArg = do
+  s <- readerAsk
+  case readQueryArg s of
+    Just query -> return query
+    Nothing    -> readerError "Invalid query"
+  where
+    readQueryArg 
+        s | s == "freeVariables" = Just FreeVariables
+          | s == "lambdaBody"    = Just LambdaBody
+          | s == "lambdaArgs"    = Just LambdaArgs
+          | s == "hlint"         = Just HLint
+          | s == "parse"         = Just ParseAST
+          | s == "targets"       = Just BuildTargets
+          | otherwise            = Nothing
 
 ------------------------------------------------------------------------------
-parseClientArg :: String -> Maybe Client
-parseClientArg s | s == "SublimeText" = Just SublimeText
-                 | s == "Emacs"       = Just Emacs
-                 | otherwise          = Nothing
+parseClientArg :: ReadM Client
+parseClientArg = do
+    s <- readerAsk
+    case readClientArg s of
+      Just query -> return query
+      Nothing    -> readerError "Invalid query"
+   where 
+    readClientArg s | s == "SublimeText" = Just SublimeText
+                    | s == "Emacs"       = Just Emacs
+                    | otherwise          = Nothing
 
 ------------------------------------------------------------------------------
 runQuery
@@ -122,4 +136,3 @@ targets :: FilePath -> IO String
 targets cabalFilePath =  do 
   gpDesc <- readPackageDescription silent cabalFilePath
   return . show . buildTargetNames' $ gpDesc 
-

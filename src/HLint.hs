@@ -4,8 +4,8 @@ module HLint (hlint) where
 
 import Control.Applicative
 import Data.Maybe
-import Temporary.API
-import Language.Haskell.Exts.Annotated (SrcSpan(..))
+import Language.Haskell.HLint2
+import Language.Haskell.Exts.Annotated 
 
 ------------------------------------------------------------------------------
 hlint :: String -> IO String
